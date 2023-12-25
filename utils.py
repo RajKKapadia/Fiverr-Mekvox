@@ -17,7 +17,11 @@ def get_product_info(url: str) -> tuple:
     image_url = item.images.primary.large.url
     name = item.item_info.title.display_value
     price = item.offers.listings[0].price.amount
-    discount_price = item.offers.listings[0].price.savings.amount
-    percentage = item.offers.listings[0].price.savings.percentage
+    try:
+        discount_price = item.offers.listings[0].price.savings.amount
+        discount_percentage = item.offers.listings[0].price.savings.percentage
+    except:
+        discount_price = 0.0
+        discount_percentage = 0.0
 
-    return url, image_url, name, price, discount_price, percentage
+    return url, image_url, name, price, discount_price, discount_percentage

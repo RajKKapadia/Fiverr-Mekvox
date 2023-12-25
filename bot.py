@@ -18,29 +18,40 @@ async def start_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
 
 
 async def amazon_url_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    # if not update.effective_chat.id == config.ADMIN_ID:
-    #     return await context.bot.send_message(chat_id=update.effective_chat.id, text="You are not authorized to use this bot")
+    if not update.effective_chat.id == config.ADMIN_ID:
+        return await context.bot.send_message(chat_id=update.effective_chat.id, text="You are not authorized to use this bot")
 
     text = update.message.text
-    url, image_url, name, price, discount_price, percentage = get_product_info(
-        text)
-    price = f"{float(price):.2f}"
-    discount_price = f"{float(discount_price):.2f}"
 
-    my_list = ["🔥", "⏰", "🚨", "🌋", "👻", "🤡", "👾", "🤖", "👽", "⚠️"]
-    emoji = random.choice(my_list)
-    text = f"{emoji} <b> {name[:40]}..."
-    text += f"\n\n💰 {str(price).replace('.',',')}€ </b>"
-    text += f"\n✂️ <i>risparmi {str(discount_price).replace('.',',')}€ ({percentage}%) </i>"
-    text += f"""\n\n<a href="{url}">➡️ Offerta Amazon</a>"""
+    try:
+        url, image_url, name, price, discount_price, percentage = get_product_info(
+            text)
+        price = f"{float(price):.2f}"
+        emoji = random.choice(
+            ["🔥", "⏰", "🚨", "🌋", "👻", "🤡", "👾", "🤖", "👽", "⚠️"])
+        text = f"{emoji} <b> {name[:40]}..."
+        text += f"\n\n💰 {str(price).replace('.',',')}€ </b>"
+        if discount_price == 0.0:
+            text += random.choice(['☘️ un ottimo prodotto', '🐺 item gagliardo',
+                                   '😆 merita anche senza sconto', '🤔 e se..', 
+                                   '🧙‍♂️ quasi magico', '👽 extraterrestre', '👾 superlativ', 
+                                   '🙌 da mani alzate', '👀 sotto osservazione', 
+                                   '🥷 mitico come un ninja', '🧞‍♂️ gagliardo come il genio'])
+        else:
+            discount_price = f"{float(discount_price):.2f}"
+            text += f"\n✂️ <i>risparmi {str(discount_price).replace('.',',')}€ ({percentage}%) </i>"
+        
+        text += f"""\n\n<a href="{url}">➡️ Offerta Amazon</a>"""
 
-    button = InlineKeyboardMarkup(
-        [[InlineKeyboardButton(text="🚀 Scopri l'offerta", url=url)]])
+        button = InlineKeyboardMarkup(
+            [[InlineKeyboardButton(text="🚀 Scopri l'offerta", url=url)]])
 
-    await context.bot.send_photo(chat_id=update.effective_chat.id,
-                                 photo=image_url, caption=text, reply_markup=button, parse_mode="HTML")
-    await context.bot.send_photo(chat_id=config.CHANNEL_ID, photo=image_url,
-                                 caption=text, reply_markup=button, parse_mode="HTML")
+        await context.bot.send_photo(chat_id=update.effective_chat.id,
+                                     photo=image_url, caption=text, reply_markup=button, parse_mode="HTML")
+        await context.bot.send_photo(chat_id=config.CHANNEL_ID, photo=image_url,
+                                     caption=text, reply_markup=button, parse_mode="HTML")
+    except:
+        await context.bot.send_message(chat_id=update.effective_chat.id, text=f"The URL -> {text} is invalid, please check the URL.")
 
 
 async def error_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
