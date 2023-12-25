@@ -18,8 +18,6 @@ async def start_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
 
 
 async def amazon_url_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    if not update.effective_chat.id == config.ADMIN_ID:
-        return await context.bot.send_message(chat_id=update.effective_chat.id, text="You are not authorized to use this bot")
 
     text = update.message.text
 
