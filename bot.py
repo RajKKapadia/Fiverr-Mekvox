@@ -1,15 +1,10 @@
-import logging
 import random
 from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler, MessageHandler, filters
 
 import config
 from utils import get_product_info
-
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
+from logger import amzn_bot_logger
 
 
 async def start_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -19,26 +14,35 @@ async def start_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
 
 async def amazon_url_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
+    URL = update.message.text
     text = update.message.text
+
+    amzn_bot_logger.info('A new request came...')
+    amzn_bot_logger.info(f'Chat ID -> {update.effective_chat.id}')
+    amzn_bot_logger.info(f'Message -> {text}')
 
     try:
         url, image_url, name, price, discount_price, percentage = get_product_info(
             text)
-        price = f"{float(price):.2f}"
+        if price == 0.0:
+            price = f"controlla il prezzo sulla pagina del prodotto."
+        else:
+            price = f"{float(price):.2f}"
         emoji = random.choice(
             ["🔥", "⏰", "🚨", "🌋", "👻", "🤡", "👾", "🤖", "👽", "⚠️"])
         text = f"{emoji} <b> {name[:40]}..."
         text += f"\n\n💰 {str(price).replace('.',',')}€ </b>"
         if discount_price == 0.0:
+            text += '\n\n'
             text += random.choice(['☘️ un ottimo prodotto', '🐺 item gagliardo',
                                    '😆 merita anche senza sconto', '🤔 e se..', 
-                                   '🧙‍♂️ quasi magico', '👽 extraterrestre', '👾 superlativ', 
+                                   '🧙‍♂️ quasi magico', '👽 extraterrestre', '👾 superlativo', 
                                    '🙌 da mani alzate', '👀 sotto osservazione', 
                                    '🥷 mitico come un ninja', '🧞‍♂️ gagliardo come il genio'])
         else:
             discount_price = f"{float(discount_price):.2f}"
             text += f"\n✂️ <i>risparmi {str(discount_price).replace('.',',')}€ ({percentage}%) </i>"
-        
+
         text += f"""\n\n<a href="{url}">➡️ Offerta Amazon</a>"""
 
         button = InlineKeyboardMarkup(
@@ -49,7 +53,7 @@ async def amazon_url_handler(update: Update, context: ContextTypes.DEFAULT_TYPE)
         await context.bot.send_photo(chat_id=config.CHANNEL_ID, photo=image_url,
                                      caption=text, reply_markup=button, parse_mode="HTML")
     except:
-        await context.bot.send_message(chat_id=update.effective_chat.id, text=f"The URL -> {text} is invalid, please check the URL.")
+        await context.bot.send_message(chat_id=update.effective_chat.id, text=f"The URL -> {URL} is invalid, please check the URL.")
 
 
 async def error_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -65,3 +69,4 @@ if __name__ == '__main__':
     application.add_error_handler(error_handler)
 
     application.run_polling(timeout=20)
+    
