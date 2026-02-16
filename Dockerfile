@@ -2,10 +2,12 @@ FROM python:3.12.11-slim
 
 WORKDIR /usr/src/app
 
-COPY requirements.txt .
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
-RUN pip install --no-cache-dir -r requirements.txt
+COPY pyproject.toml uv.lock ./
+
+RUN uv sync --frozen --no-dev
 
 COPY . .
 
-CMD ["python", "bot.py"]
+CMD ["uv", "run", "bot.py"]
