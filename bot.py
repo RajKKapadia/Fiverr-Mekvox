@@ -31,7 +31,12 @@ async def amazon_url_handler(update: Update, context: ContextTypes.DEFAULT_TYPE)
         emoji = random.choice(
             ["🔥", "⏰", "🚨", "🌋", "👻", "🤡", "👾", "🤖", "👽", "⚠️"])
         text = f"{emoji} <b> {name[:40]}..."
-        text += f"\n\n💰 {str(price).replace('.',',')}€ </b>"
+        discounted_price_text = str(price).replace('.', ',')
+        if discount_price == 0.0:
+            original_price_text = discounted_price_text
+        else:
+            original_price_text = f"{float(price) + float(discount_price):.2f}".replace('.', ',')
+        text += f"\n\n💰 {discounted_price_text}€ invece di {original_price_text}€ </b>"
         if discount_price == 0.0:
             text += '\n'
             text += random.choice(['☘️ un ottimo prodotto', '🐺 item gagliardo',
