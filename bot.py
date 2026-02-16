@@ -25,7 +25,7 @@ async def amazon_url_handler(update: Update, context: ContextTypes.DEFAULT_TYPE)
         url, image_url, name, price, discount_price, percentage = get_product_info(
             text)
         if price == 0.0:
-            price = f"controlla il prezzo sulla pagina del prodotto."
+            price = "controlla il prezzo sulla pagina del prodotto."
         else:
             price = f"{float(price):.2f}"
         emoji = random.choice(
@@ -52,12 +52,19 @@ async def amazon_url_handler(update: Update, context: ContextTypes.DEFAULT_TYPE)
                                      photo=image_url, caption=text, reply_markup=button, parse_mode="HTML")
         await context.bot.send_photo(chat_id=config.CHANNEL_ID, photo=image_url,
                                      caption=text, reply_markup=button, parse_mode="HTML")
-    except:
+    except Exception as e:
+        amzn_bot_logger.error(e)
         await context.bot.send_message(chat_id=update.effective_chat.id, text=f"The URL -> {URL} is invalid, please check the URL.")
 
 
-async def error_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await context.bot.send_message(chat_id=update.effective_chat.id, text="We are facing an issue, please try after sometime.")
+async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE) -> None:
+    amzn_bot_logger.exception("Unhandled exception in update processing", exc_info=context.error)
+
+    if isinstance(update, Update) and update.effective_chat:
+        await context.bot.send_message(
+            chat_id=update.effective_chat.id,
+            text="We are facing an issue, please try after sometime.",
+        )
 
 
 if __name__ == '__main__':
