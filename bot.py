@@ -46,7 +46,7 @@ async def amazon_url_handler(update: Update, context: ContextTypes.DEFAULT_TYPE)
                                    '🥷 mitico come un ninja', '🧞‍♂️ gagliardo come il genio'])
         else:
             discount_price = f"{float(discount_price):.2f}"
-            text += f"\n✂️ <i>risparmi {str(discount_price).replace('.',',')}€ ({percentage}%) </i>"
+            text += f"\n✂️ <i>risparmi {str(discount_price).replace('.',',')}€ ({int(percentage)}%) </i>"
 
         text += f"""\n\n<a href="{url}">➡️ Offerta Amazon</a>"""
 
