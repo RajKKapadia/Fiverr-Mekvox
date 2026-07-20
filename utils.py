@@ -1,26 +1,17 @@
-import warnings
 from typing import Any
 
-try:
-    from amazon_creatorsapi import AmazonApi
-    from amazon_creatorsapi import get_asin
-except ImportError:
-    # Backward compatibility when only the old package is installed.
-    with warnings.catch_warnings():
-        warnings.filterwarnings(
-            "ignore",
-            message=r"The 'amazon_paapi' module is deprecated.*",
-            category=DeprecationWarning,
-        )
-        from amazon_paapi import AmazonApi
-        from amazon_paapi import get_asin
+from amazon_creatorsapi import AmazonCreatorsApi, Country
 
 import config
 from logger import amzn_bot_logger
 
-amazon = AmazonApi(config.AWS_ACCESS_KEY_ID, config.AWS_SECRET_ACCESS_KEY,
-                   config.AWS_ASSOCIATE_TAG, 'IT')
-
+amazon = AmazonCreatorsApi(
+    credential_id=config.AMAZON_CREATORS_CREDENTIAL_ID,
+    credential_secret=config.AMAZON_CREATORS_CREDENTIAL_SECRET,
+    tag=config.AMAZON_ASSOCIATE_TAG,
+    country=Country.IT,
+    version="3.2",
+)
 
 def _to_float(value) -> float | None:
     if value is None:
@@ -85,7 +76,9 @@ def _pick_listing(listings: list[Any] | None) -> Any:
     return listings[0]
 
 
-def _extract_from_offer_summaries(item) -> tuple[float | None, float | None, float | None]:
+def _extract_from_offer_summaries(
+    item,
+) -> tuple[float | None, float | None, float | None]:
     offers = getattr(item, "offers", None)
     summaries = getattr(offers, "summaries", None) if offers is not None else None
     if not summaries:
@@ -107,23 +100,23 @@ def get_product_info(url: str) -> tuple:
     """
     return : url, image_url, name, price, discount_price, percentage
     """
-    amzn_bot_logger.info('Starting to fetch Amazon data.')
-    asin = get_asin(url)
-    amzn_bot_logger.info(f'Amazon URL -> {url}')
-    amzn_bot_logger.info(f'ASIN -> {asin}')
-    item = amazon.get_items(asin)[0]
+    amzn_bot_logger.info("Starting to fetch Amazon data.")
+    amzn_bot_logger.info(f"Amazon URL -> {url}")
+    item = amazon.get_items(url)[0]
     url = item.detail_page_url
-    amzn_bot_logger.info(f'URL -> {url}')
+    amzn_bot_logger.info(f"URL -> {url}")
     image_url = item.images.primary.large.url
-    amzn_bot_logger.info(f'Image URL -> {image_url}')
+    amzn_bot_logger.info(f"Image URL -> {image_url}")
     name = item.item_info.title.display_value
-    amzn_bot_logger.info(f'Name -> {name}')
+    amzn_bot_logger.info(f"Name -> {name}")
     offers = getattr(item, "offers", None)
     listings = getattr(offers, "listings", None) if offers is not None else None
     listing = _pick_listing(listings)
     if listing is None:
         offers_v2 = getattr(item, "offers_v2", None)
-        listings_v2 = getattr(offers_v2, "listings", None) if offers_v2 is not None else None
+        listings_v2 = (
+            getattr(offers_v2, "listings", None) if offers_v2 is not None else None
+        )
         listing = _pick_listing(listings_v2)
 
     price = None
@@ -158,13 +151,22 @@ def get_product_info(url: str) -> tuple:
             _get_field(saving_basis, "money", "amount"),
             _get_field(saving_basis, "money", "display_amount"),
         )
-        if discount_price is None and price is not None and base_price is not None and base_price > price:
+        if (
+            discount_price is None
+            and price is not None
+            and base_price is not None
+            and base_price > price
+        ):
             discount_price = round(base_price - price, 2)
         if discount_percentage is None and discount_price is not None and base_price:
             discount_percentage = round((discount_price / base_price) * 100, 2)
     else:
-        amzn_bot_logger.info("No offers.listings available for this ASIN; trying offers.summaries.")
-        summary_price, summary_discount_price, summary_discount_percentage = _extract_from_offer_summaries(item)
+        amzn_bot_logger.info(
+            "No offers.listings available for this ASIN; trying offers.summaries."
+        )
+        summary_price, summary_discount_price, summary_discount_percentage = (
+            _extract_from_offer_summaries(item)
+        )
         price = summary_price
         discount_price = summary_discount_price
         discount_percentage = summary_discount_percentage
@@ -178,3 +180,4 @@ def get_product_info(url: str) -> tuple:
         discount_percentage = 0.0
 
     return url, image_url, name, price, discount_price, discount_percentage
+
