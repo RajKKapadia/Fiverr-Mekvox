@@ -13,6 +13,7 @@ amazon = AmazonCreatorsApi(
     version="3.2",
 )
 
+
 def _to_float(value) -> float | None:
     if value is None:
         return None
@@ -180,4 +181,3 @@ def get_product_info(url: str) -> tuple:
         discount_percentage = 0.0
 
     return url, image_url, name, price, discount_price, discount_percentage
-
